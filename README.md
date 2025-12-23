@@ -1,0 +1,2 @@
+# corona-analytics
+Lightweight Analytics
