@@ -1,1 +1,108 @@
-"use strict";(()=>{var o=class{queue=[];url="";debug=!1;STORAGE_KEY="corona_analytics_queue";constructor(){this._recoverFromStorage()}init(e){this.url=e.url,this.debug=e.debug||!1,this.debug&&console.log("CoronaAnalytics: Initialized"),this._processLoaderQueue(),document.addEventListener("visibilitychange",()=>{document.visibilityState==="hidden"&&this.flush()})}log(e,t={}){if(!this.url){console.warn("CoronaAnalytics: No URL set. Call init() first.");return}let s={event:e,time:Date.now(),...t};this.queue.push(s),this._saveToStorage(),this.debug&&console.log(`Logged: ${e}`,s)}flush(){if(!this.url||this.queue.length===0)return;let e=JSON.stringify(this.queue),t=new Blob([e],{type:"application/json"});navigator.sendBeacon(this.url,t)?(this.debug&&console.log("Flushed via Beacon"),this.queue=[],this._saveToStorage()):fetch(this.url,{method:"POST",body:e,headers:{"Content-Type":"application/json"},keepalive:!0}).then(()=>{this.debug&&console.log("Flushed via Fetch"),this.queue=[],this._saveToStorage()}).catch(i=>console.error("Analytics flush failed",i))}_saveToStorage(){try{localStorage.setItem(this.STORAGE_KEY,JSON.stringify(this.queue))}catch{}}_recoverFromStorage(){try{let e=localStorage.getItem(this.STORAGE_KEY);if(e){let t=JSON.parse(e);Array.isArray(t)&&(this.queue=[...t,...this.queue],this.debug&&t.length>0&&console.log(`Recovered ${t.length} events from storage.`))}}catch(e){console.error("Failed to recover analytics",e)}}_processLoaderQueue(){let e=window.CoronaAnalytics;e&&Array.isArray(e.q)&&(this.debug&&console.log(`Processing ${e.q.length} queued commands...`),e.q.forEach(t=>{let s=t[0],i=t.slice(1);typeof this[s]=="function"&&this[s](...i)}))}};window.CoronaAnalytics=new o;})();
+"use strict";
+(() => {
+  // src/sdk.ts
+  var CoronaAnalytics = class {
+    queue = [];
+    url = "";
+    debug = false;
+    STORAGE_KEY = "corona_analytics_queue";
+    constructor() {
+      this._recoverFromStorage();
+    }
+    /**
+     * Initialize the SDK with configuration.
+     * This is usually the first call made by the user.
+     */
+    init(config) {
+      this.url = config.url;
+      this.debug = config.debug || false;
+      if (this.debug) console.log("CoronaAnalytics: Initialized");
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "hidden") {
+          this.flush();
+        }
+      });
+    }
+    /**
+     * Log an event to the queue.
+     */
+    log(eventName, data = {}) {
+      const newEvent = {
+        event: eventName,
+        time: Date.now(),
+        ...data
+      };
+      this.queue.push(newEvent);
+      this._saveToStorage();
+      if (this.debug) console.log(`Logged: ${eventName}`, newEvent);
+    }
+    /**
+     * Force upload of all queued events.
+     */
+    flush() {
+      if (!this.url || this.queue.length === 0) return;
+      const payload = JSON.stringify(this.queue);
+      const blob = new Blob([payload], { type: "application/json" });
+      const success = navigator.sendBeacon(this.url, blob);
+      if (success) {
+        if (this.debug) console.log("Flushed via Beacon");
+        this.queue = [];
+        this._saveToStorage();
+      } else {
+        fetch(this.url, {
+          method: "POST",
+          body: payload,
+          headers: { "Content-Type": "application/json" },
+          keepalive: true
+        }).then(() => {
+          if (this.debug) console.log("Flushed via Fetch");
+          this.queue = [];
+          this._saveToStorage();
+        }).catch((e) => console.error("Analytics flush failed", e));
+      }
+    }
+    processQueue(queue) {
+      if (this.debug)
+        console.log(`Processing ${queue.length} queued commands...`);
+      queue.forEach((args) => {
+        const params = Array.from(args);
+        const method = params[0];
+        const data = params.slice(1);
+        if (typeof this[method] === "function") {
+          this[method](...data);
+        }
+      });
+    }
+    // --- PRIVATE HELPERS ---
+    _saveToStorage() {
+      try {
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.queue));
+      } catch (e) {
+      }
+    }
+    _recoverFromStorage() {
+      try {
+        const stored = localStorage.getItem(this.STORAGE_KEY);
+        if (stored) {
+          const recoveredEvents = JSON.parse(stored);
+          if (Array.isArray(recoveredEvents)) {
+            this.queue = [...recoveredEvents, ...this.queue];
+            if (this.debug && recoveredEvents.length > 0) {
+              console.log(
+                `Recovered ${recoveredEvents.length} events from storage.`
+              );
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Failed to recover analytics", e);
+      }
+    }
+  };
+  var existingStub = window.CoronaAnalytics;
+  var instance = new CoronaAnalytics();
+  window.CoronaAnalytics = instance;
+  if (existingStub && Array.isArray(existingStub.q)) {
+    instance.processQueue(existingStub.q);
+  }
+})();

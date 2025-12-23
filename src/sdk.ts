@@ -30,10 +30,6 @@ class CoronaAnalytics {
 
     if (this.debug) console.log("CoronaAnalytics: Initialized");
 
-    // 2. Process any commands the user triggered before this script loaded
-    this._processLoaderQueue();
-
-    // 3. Auto-flush on page visibility change (tab switch/close)
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "hidden") {
         this.flush();
@@ -45,11 +41,6 @@ class CoronaAnalytics {
    * Log an event to the queue.
    */
   public log(eventName: string, data: object = {}) {
-    if (!this.url) {
-      console.warn("CoronaAnalytics: No URL set. Call init() first.");
-      return;
-    }
-
     const newEvent: CAEvent = {
       event: eventName,
       time: Date.now(),
@@ -95,6 +86,23 @@ class CoronaAnalytics {
     }
   }
 
+  public processQueue(queue: any[]) {
+    if (this.debug)
+      console.log(`Processing ${queue.length} queued commands...`);
+
+    queue.forEach((args) => {
+      // 'arguments' object from the loader is not a real array, convert it
+      const params = Array.from(args);
+      const method = params[0] as keyof CoronaAnalytics;
+      const data = params.slice(1);
+
+      if (typeof this[method] === "function") {
+        // @ts-ignore
+        this[method](...data);
+      }
+    });
+  }
+
   // --- PRIVATE HELPERS ---
 
   private _saveToStorage() {
@@ -123,29 +131,18 @@ class CoronaAnalytics {
       console.error("Failed to recover analytics", e);
     }
   }
-
-  private _processLoaderQueue() {
-    // Check if the window object has the loader stub
-    const existing = (window as any).CoronaAnalytics;
-
-    // If it exists and has a 'q' array, it is the loader stub
-    if (existing && Array.isArray(existing.q)) {
-      if (this.debug)
-        console.log(`Processing ${existing.q.length} queued commands...`);
-
-      existing.q.forEach((args: any[]) => {
-        // args is ['methodName', arg1, arg2...]
-        const method = args[0] as keyof CoronaAnalytics;
-        const params = args.slice(1);
-
-        if (typeof this[method] === "function") {
-          // @ts-ignore - Dynamic dispatch
-          this[method](...params);
-        }
-      });
-    }
-  }
 }
 
-// Instantiate and replace the window object
-(window as any).CoronaAnalytics = new CoronaAnalytics();
+// Capture the existing stub (and its queue)
+const existingStub = (window as any).CoronaAnalytics;
+
+// Create the real instance
+const instance = new CoronaAnalytics();
+
+// Replace the window object immediately
+(window as any).CoronaAnalytics = instance;
+
+// Now, if there was a queue, replay it into the new instance
+if (existingStub && Array.isArray(existingStub.q)) {
+  instance.processQueue(existingStub.q);
+}
