@@ -45,6 +45,6 @@ Paste the following loader script into your `index.html`. This creates a lightwe
     s.src = src;
     var x = d.getElementsByTagName('script')[0];
     x.parentNode.insertBefore(s, x);
-  })(window, document, 'https://your-analytics.vercel.app/sdk.js');
+  })(window, document, 'https://corona-analytics-pied.vercel.app/sdk.global.js');
 </script>
 ```
