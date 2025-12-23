@@ -14,8 +14,16 @@ class CoronaAnalytics {
   private url: string = "";
   private debug: boolean = false;
   private readonly STORAGE_KEY = "corona_analytics_queue";
+  private userId: string = "";
+  private sessionId: string = "";
 
   constructor() {
+    // 1. Generate or Retrieve User ID (Persists forever)
+    this.userId = this.getPersistentId();
+
+    // 2. Generate Session ID (New for every page load)
+    this.sessionId = crypto.randomUUID();
+
     // 1. Recover any unsent data from previous sessions immediately
     this._recoverFromStorage();
   }
@@ -44,6 +52,8 @@ class CoronaAnalytics {
     const newEvent: CAEvent = {
       event: eventName,
       time: new Date().toISOString(),
+      user_id: this.userId,
+      session_id: this.sessionId,
       ...data,
     };
 
@@ -103,7 +113,23 @@ class CoronaAnalytics {
     });
   }
 
+  // Optional: Allow the app to override this if they log in later
+  public identify(realUserId: string) {
+    this.userId = realUserId;
+    localStorage.setItem("corona_analytics_user_id", realUserId);
+  }
+
   // --- PRIVATE HELPERS ---
+  private getPersistentId(): string {
+    const KEY = "corona_analytics_user_id";
+    let id = localStorage.getItem(KEY);
+
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem(KEY, id);
+    }
+    return id;
+  }
 
   private _saveToStorage() {
     try {

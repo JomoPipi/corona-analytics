@@ -6,7 +6,11 @@
     url = "";
     debug = false;
     STORAGE_KEY = "corona_analytics_queue";
+    userId = "";
+    sessionId = "";
     constructor() {
+      this.userId = this.getPersistentId();
+      this.sessionId = crypto.randomUUID();
       this._recoverFromStorage();
     }
     /**
@@ -30,6 +34,8 @@
       const newEvent = {
         event: eventName,
         time: (/* @__PURE__ */ new Date()).toISOString(),
+        user_id: this.userId,
+        session_id: this.sessionId,
         ...data
       };
       this.queue.push(newEvent);
@@ -73,7 +79,21 @@
         }
       });
     }
+    // Optional: Allow the app to override this if they log in later
+    identify(realUserId) {
+      this.userId = realUserId;
+      localStorage.setItem("corona_analytics_user_id", realUserId);
+    }
     // --- PRIVATE HELPERS ---
+    getPersistentId() {
+      const KEY = "corona_analytics_user_id";
+      let id = localStorage.getItem(KEY);
+      if (!id) {
+        id = crypto.randomUUID();
+        localStorage.setItem(KEY, id);
+      }
+      return id;
+    }
     _saveToStorage() {
       try {
         localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.queue));
