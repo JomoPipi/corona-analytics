@@ -1,8 +1,19 @@
-# Corona Analytics
+# Corona Analytics 🦠
 
-Paste the following script into your html to load the sdk:
+A lightweight, performance-first analytics SDK designed for games and high-performance web apps.
 
-```js
+**Why use this instead of Google Analytics?**
+* **Zero Performance Cost:** No network requests during gameplay. Logs are queued in memory.
+* **Offline First:** Events are persisted to `localStorage`. If a player crashes while offline, data is uploaded the next time they play.
+* **Ad-Blocker Friendly:** Self-hosted on your own domain/Vercel, avoiding common ad-block lists.
+* **Tiny:** < 2KB minified.
+
+---
+
+## 1. Client Setup
+
+Paste the following loader script into your `index.html`. This creates a lightweight proxy that queues events immediately, ensuring you never miss a `game_start` event even if the SDK hasn't finished loading.
+```html
 <script>
   (function(w, d, src) {
     // 1. If the global doesn't exist, create a Proxy
