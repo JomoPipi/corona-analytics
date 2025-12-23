@@ -48,3 +48,12 @@ Paste the following loader script into your `index.html`. This creates a lightwe
   })(window, document, 'https://corona-analytics-pied.vercel.app/sdk.global.js');
 </script>
 ```
+
+```js
+// Call `init()`
+CoronaAnalytics.init({
+  // Point to THEIR backend, not yours
+  url: 'https://api.your-game.com/ingest', 
+  debug: true
+});
+```
