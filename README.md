@@ -53,13 +53,14 @@ in your project:
 ```js
 // Call `init()`
 CoronaAnalytics.init({
-  // Point to THEIR backend, not yours
+  // Point to your backend
   url: 'https://api.your-game.com/ingest', 
+  // Optional:
   debug: true
 });
 ```
 
-type def:
+include this type def if using typescript:
 ```typescript
 // src/analytics.d.ts
 
