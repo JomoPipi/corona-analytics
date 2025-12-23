@@ -1,6 +1,8 @@
 interface CAEvent {
   event: string;
-  time: string;
+  received_at: string;
+  user_id: string;
+  session_id: string;
   [key: string]: any;
 }
 
@@ -51,7 +53,7 @@ class CoronaAnalytics {
   public log(eventName: string, data: object = {}) {
     const newEvent: CAEvent = {
       event: eventName,
-      time: new Date().toISOString(),
+      received_at: new Date().toISOString(),
       user_id: this.userId,
       session_id: this.sessionId,
       ...data,

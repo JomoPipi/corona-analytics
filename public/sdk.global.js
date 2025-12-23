@@ -33,7 +33,7 @@
     log(eventName, data = {}) {
       const newEvent = {
         event: eventName,
-        time: (/* @__PURE__ */ new Date()).toISOString(),
+        received_at: (/* @__PURE__ */ new Date()).toISOString(),
         user_id: this.userId,
         session_id: this.sessionId,
         ...data
