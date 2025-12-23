@@ -49,9 +49,8 @@ Paste the following loader script into your `index.html`. This creates a lightwe
 </script>
 ```
 
-in your project:
+Initilialize it:
 ```js
-// Call `init()`
 CoronaAnalytics.init({
   // Point to your backend
   url: 'https://api.your-game.com/ingest', 
@@ -60,38 +59,21 @@ CoronaAnalytics.init({
 });
 ```
 
-include this type def if using typescript:
+Type definition - include this in a file like `src/analytics.d.ts` if using typescript:
 ```typescript
-// src/analytics.d.ts
 
-export {}; // Ensure this is treated as a module
+export {};
 
 declare global {
   interface Window {
     CoronaAnalytics: CoronaAnalyticsSDK;
   }
-
-  // Allow usage without 'window.' (e.g. CoronaAnalytics.log(...))
   var CoronaAnalytics: CoronaAnalyticsSDK;
 }
 
 interface CoronaAnalyticsSDK {
-  /**
-   * Initialize the analytics SDK.
-   * @param config Configuration object
-   */
   init(config: { url: string; projectId?: string; debug?: boolean }): void;
-
-  /**
-   * Log an event to the queue.
-   * @param eventName Name of the event (e.g., 'game_start')
-   * @param data Optional data object (e.g., { level: 1 })
-   */
   log(eventName: string, data?: Record<string, any>): void;
-
-  /**
-   * Force upload of all queued events.
-   */
   flush(): void;
 }
 ```
