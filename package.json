@@ -1,0 +1,14 @@
+{
+  "name": "corona-analytics",
+  "version": "1.0.0",
+  "description": "Lightweight Analytics",
+  "main": "index.js",
+  "scripts": {
+    "compile": "npx tsc"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
