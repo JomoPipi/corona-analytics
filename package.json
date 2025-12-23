@@ -4,11 +4,12 @@
   "description": "Lightweight Analytics",
   "main": "index.js",
   "scripts": {
-    "compile": "npx tsc"
+    "dev": "tsup src/sdk.ts --format iife --watch --out-dir public",
+    "build": "tsup src/sdk.ts --format iife --minify --clean --out-dir public"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "typescript": "^5.9.3"
+    "tsup": "^8.5.1"
   }
 }
