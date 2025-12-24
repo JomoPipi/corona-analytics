@@ -23,7 +23,7 @@ class CoronaAnalytics {
 
   constructor() {
     // 1. Generate or Retrieve User ID (Persists forever)
-    this.userId = this.getPersistentId();
+    this.userId = isLocalStorageAvailable() ? this.getPersistentId() : "";
 
     // 2. Generate Session ID (New for every page load)
     this.sessionId = crypto.randomUUID();
@@ -53,7 +53,7 @@ class CoronaAnalytics {
       if (this.debug) console.log("CoronaAnalytics: Disabled. Clearing queue.");
 
       this.queue = []; // Dump memory
-      localStorage.removeItem(this.STORAGE_KEY); // Dump disk
+      this.safeStorage.removeItem(this.STORAGE_KEY); // Dump disk
       return;
     }
   }
@@ -131,24 +131,24 @@ class CoronaAnalytics {
   // Optional: Allow the app to override this if they log in later
   public identify(realUserId: string) {
     this.userId = realUserId;
-    localStorage.setItem("corona_analytics_user_id", realUserId);
+    this.safeStorage.setItem("corona_analytics_user_id", realUserId);
   }
 
   // --- PRIVATE HELPERS ---
   private getPersistentId(): string {
     const KEY = "corona_analytics_user_id";
-    let id = localStorage.getItem(KEY);
+    let id = this.safeStorage.getItem(KEY);
 
     if (!id) {
       id = crypto.randomUUID();
-      localStorage.setItem(KEY, id);
+      this.safeStorage.setItem(KEY, id);
     }
     return id;
   }
 
   private _saveToStorage() {
     try {
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.queue));
+      this.safeStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.queue));
     } catch (e) {
       // Storage quota full or disabled
     }
@@ -156,7 +156,7 @@ class CoronaAnalytics {
 
   private _recoverFromStorage() {
     try {
-      const stored = localStorage.getItem(this.STORAGE_KEY);
+      const stored = this.safeStorage.getItem(this.STORAGE_KEY);
       if (stored) {
         const recoveredEvents = JSON.parse(stored);
         if (Array.isArray(recoveredEvents)) {
@@ -172,6 +172,30 @@ class CoronaAnalytics {
       console.error("Failed to recover analytics", e);
     }
   }
+
+  private safeStorage = {
+    getItem: (key: string): string | null => {
+      try {
+        return localStorage.getItem(key);
+      } catch (e) {
+        return null; // Fallback: pretend nothing is stored
+      }
+    },
+    setItem: (key: string, value: string): void => {
+      try {
+        localStorage.setItem(key, value);
+      } catch (e) {
+        // Fallback: Do nothing (or store in a class-level variable if you really need it for this session)
+      }
+    },
+    removeItem: (key: string): void => {
+      try {
+        localStorage.removeItem(key);
+      } catch (e) {
+        // Ignore
+      }
+    },
+  };
 }
 
 // Capture the existing stub (and its queue)
@@ -186,4 +210,15 @@ const instance = new CoronaAnalytics();
 // Now, if there was a queue, replay it into the new instance
 if (existingStub && Array.isArray(existingStub.q)) {
   instance.processQueue(existingStub.q);
+}
+
+function isLocalStorageAvailable(): boolean {
+  try {
+    const testKey = "__storage_test__";
+    localStorage.setItem(testKey, testKey);
+    localStorage.removeItem(testKey);
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
