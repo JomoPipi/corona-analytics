@@ -9,6 +9,7 @@ interface CAEvent {
 interface CAConfig {
   url: string;
   debug?: boolean;
+  enabled?: boolean;
 }
 
 class CoronaAnalytics {
@@ -18,6 +19,7 @@ class CoronaAnalytics {
   private readonly STORAGE_KEY = "corona_analytics_queue";
   private userId: string = "";
   private sessionId: string = "";
+  private enabled = true;
 
   constructor() {
     // 1. Generate or Retrieve User ID (Persists forever)
@@ -37,6 +39,7 @@ class CoronaAnalytics {
   public init(config: CAConfig) {
     this.url = config.url;
     this.debug = config.debug || false;
+    this.enabled = config.enabled !== false;
 
     if (this.debug) console.log("CoronaAnalytics: Initialized");
 
@@ -45,12 +48,22 @@ class CoronaAnalytics {
         this.flush();
       }
     });
+
+    if (!this.enabled) {
+      if (this.debug) console.log("CoronaAnalytics: Disabled. Clearing queue.");
+
+      this.queue = []; // Dump memory
+      localStorage.removeItem(this.STORAGE_KEY); // Dump disk
+      return;
+    }
   }
 
   /**
    * Log an event to the queue.
    */
   public log(eventName: string, data: object = {}) {
+    if (!this.enabled) return false;
+
     const newEvent: CAEvent = {
       event: eventName,
       received_at: new Date().toISOString(),

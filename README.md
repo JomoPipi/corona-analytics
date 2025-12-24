@@ -72,7 +72,7 @@ declare global {
 }
 
 interface CoronaAnalyticsSDK {
-  init(config: { url: string; projectId?: string; debug?: boolean }): void;
+  init(config: { url: string; debug?: boolean; enabled?: boolean }): void;
   log(eventName: string, data?: Record<string, any>): void;
   flush(): void;
 }
