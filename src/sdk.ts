@@ -26,7 +26,7 @@ class CoronaAnalytics {
     this.userId = isLocalStorageAvailable() ? this.getPersistentId() : "";
 
     // 2. Generate Session ID (New for every page load)
-    this.sessionId = crypto.randomUUID();
+    this.sessionId = this.generateUUID();
 
     // 1. Recover any unsent data from previous sessions immediately
     this._recoverFromStorage();
@@ -140,7 +140,7 @@ class CoronaAnalytics {
     let id = this.safeStorage.getItem(KEY);
 
     if (!id) {
-      id = crypto.randomUUID();
+      id = this.generateUUID();
       this.safeStorage.setItem(KEY, id);
     }
     return id;
@@ -196,6 +196,26 @@ class CoronaAnalytics {
       }
     },
   };
+
+  private generateUUID(): string {
+    // 1. Try modern API (iOS 15.4+, Chrome 92+)
+    if (
+      typeof crypto !== "undefined" &&
+      typeof crypto.randomUUID === "function"
+    ) {
+      return crypto.randomUUID();
+    }
+
+    // 2. Fallback for older browsers (iOS < 15.4, etc.)
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
+      /[xy]/g,
+      function (c) {
+        var r = (Math.random() * 16) | 0,
+          v = c == "x" ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+      }
+    );
+  }
 }
 
 // Capture the existing stub (and its queue)
